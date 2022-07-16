@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -42,7 +43,7 @@ public class TurnManager : MonoBehaviour {
                 opponentAI = new RandomAI();
                 break;
             case OpponentScriptableObject.AI.Flip:
-                opponentAI = new RandomAI(); // TODO: use a smarter AI
+                opponentAI = new FlipAI();
                 break;
             default:
                 opponentAI = null; // Two-player
@@ -86,35 +87,44 @@ public class TurnManager : MonoBehaviour {
         playerTurn = Random.Range(0, 2) == 0; // Coin flip
         currentRound++;
         CardSelector.Instance.StartGame();
+        UpdateScores();
         NextTurn();
     }
 
     // Places a card on the board and flips neighbor cards.
     public void PlaceCard(Card card, int i) {
         board[i] = card;
+        foreach (Card flippedCard in FlippedCards(card, i)) {
+            flippedCard.SetFlipped(card.flipped);
+        }
+        UpdateScores();
+    }
+
+    public List<Card> FlippedCards(Card card, int i) {
+        List<Card> flippedCards = new List<Card>();
         int col = i % 3;
         int row = i / 3;
         if (col > 0 && board[i - 1] != null && board[i - 1].flipped != card.flipped) {
             // Check card on the left
             if (card.card.values[2] > board[i - 1].card.values[0])
-                board[i - 1].SetFlipped(card.flipped);
+                flippedCards.Add(board[i - 1]);
         }
         if (col < 2 && board[i + 1] != null && board[i + 1].flipped != card.flipped) {
             // Check card on the right
             if (card.card.values[0] > board[i + 1].card.values[2])
-                board[i + 1].SetFlipped(card.flipped);
+                flippedCards.Add(board[i + 1]);
         }
         if (row > 0 && board[i - 3] != null && board[i - 3].flipped != card.flipped) {
             // Check card above
             if (card.card.values[1] > board[i - 3].card.values[3])
-                board[i - 3].SetFlipped(card.flipped);
+                flippedCards.Add(board[i - 3]);
         }
         if (row < 2 && board[i + 3] != null && board[i + 3].flipped != card.flipped) {
             // Check card below
             if (card.card.values[3] > board[i + 3].card.values[1])
-                board[i + 3].SetFlipped(card.flipped);
+                flippedCards.Add(board[i + 3]);
         }
-        UpdateScores();
+        return flippedCards;
     }
 
     protected void UpdateScores() {
@@ -146,9 +156,9 @@ public class TurnManager : MonoBehaviour {
         playerTurn = !playerTurn;
         if (playerTurn) {
             currentRound++;
-            scoreText.text = "Player 2 turn\n";
-        } else {
             scoreText.text = "Player 1 turn\n";
+        } else {
+            scoreText.text = "Player 2 turn\n";
         }
         scoreText.text += score1 + " x " + score2;
         // Start next player's turn.

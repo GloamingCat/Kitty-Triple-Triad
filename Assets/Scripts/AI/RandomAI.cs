@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class RandomAI : PlayerAI {
 
     public override DeckManager.Card[] ChooseHand(DeckManager.DeckEntry[] deck) {
+        // Choose at random.
         int i = 0;
         DeckManager.Card[] hand = new DeckManager.Card[5];
         while (i < 5) {
@@ -19,6 +20,7 @@ public class RandomAI : PlayerAI {
     }
 
     protected override Tuple<Card, BoardSlot> Play(List<Card> hand, List<BoardSlot> slots) {
+        // Choose at random.
         int card = UnityEngine.Random.Range(0, hand.Count);
         int slot = UnityEngine.Random.Range(0, slots.Count);
         return new Tuple<Card, BoardSlot>(hand[card], slots[slot]);
