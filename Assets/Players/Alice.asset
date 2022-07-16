@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Alice
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptableObject
   title: Alice
-  deck: Tux 1 Calico 5
+  deck: White 5
   aiType: 0

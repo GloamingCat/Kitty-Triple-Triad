@@ -42,7 +42,7 @@ public class TurnManager : MonoBehaviour {
                 opponentAI = new RandomAI();
                 break;
             case OpponentScriptableObject.AI.Flip:
-                opponentAI = null; // TODO
+                opponentAI = new RandomAI(); // TODO: use a smarter AI
                 break;
             default:
                 opponentAI = null; // Two-player
@@ -50,7 +50,18 @@ public class TurnManager : MonoBehaviour {
             }
         }
         // Let player select their cards.
-        CardSelector.Instance.ChooseHand(DeckManager.Instance.GetPlayerDeck(), opponentAI == null);
+        if (opponentAI == null) {
+            // If no opponent is selected, use a copy of player's deck.
+            DeckManager.DeckEntry[] deck = opponent != null ? 
+                DeckManager.Instance.ParseDeck(opponent.deck) :
+                DeckManager.Instance.GetPlayerDeck();
+            CardSelector.Instance.ChooseHand(deck, true);
+            scoreText.text = "Select opponent's (player 2) cards";
+        } else {
+            // Player vs AI.
+            CardSelector.Instance.ChooseHand(DeckManager.Instance.GetPlayerDeck(), false);
+            scoreText.text = "Select your cards";
+        }
     }
 
     // Button callback when player finishes choosing their cards.
@@ -62,6 +73,7 @@ public class TurnManager : MonoBehaviour {
                 CardSelector.Instance.MoveOpponentHand(opponentHand);
                 // Start card selection again, but for second player.
                 CardSelector.Instance.ChooseHand(DeckManager.Instance.GetPlayerDeck(), false);
+                scoreText.text = "Select player 1's cards";
                 playerTurn = false;
                 return;
             } else {
@@ -102,30 +114,10 @@ public class TurnManager : MonoBehaviour {
             if (card.card.values[3] > board[i + 3].card.values[1])
                 board[i + 3].SetFlipped(card.flipped);
         }
+        UpdateScores();
     }
 
-    public void NextTurn() {
-        if (UpdateScores())
-            return;
-        if (playerTurn) {
-            playerTurn = false;
-            if (opponentAI != null)
-                opponentAI.OpponentTurn();
-        } else {
-            playerTurn = true;
-            currentRound++;
-        }
-        // Enable buttons for next player
-        foreach (CardButton button in CardSelector.Instance.handParent.GetComponentsInChildren<CardButton>()) {
-            button.enabled = playerTurn;
-        }
-        foreach (CardButton button in CardSelector.Instance.handParent2.GetComponentsInChildren<CardButton>()) {
-            button.enabled = !playerTurn;
-        }
-    }
-
-    // Returns true if game ended.
-    protected bool UpdateScores() {
+    protected void UpdateScores() {
         score1 = CardSelector.Instance.handParent.childCount;
         score2 = CardSelector.Instance.handParent2.childCount;
         foreach (Card card in CardSelector.Instance.boardParent.GetComponentsInChildren<Card>()) {
@@ -134,26 +126,54 @@ public class TurnManager : MonoBehaviour {
             else
                 score1++;
         }
-        // Verify is one of them won
+    }
+
+    public void NextTurn() {
+        // Verify if game ended.
+        if (GameEnded()) {
+            if (score1 > score2) {
+                scoreText.text = opponentAI == null ? "Player 1 wins!\n" : "You win!\n";
+            } else if (score1 < score2) {
+                scoreText.text = opponentAI == null ? "Player 2 wins!\n" : "You lose.\n";
+            } else {
+                scoreText.text = "Draw.\n";
+            }
+            scoreText.text += score1 + " x " + score2;
+            continueButton.gameObject.SetActive(true);
+            return;
+        }
+        // Else, continue to next turn.
+        playerTurn = !playerTurn;
+        if (playerTurn) {
+            currentRound++;
+            scoreText.text = "Player 2 turn\n";
+        } else {
+            scoreText.text = "Player 1 turn\n";
+        }
+        scoreText.text += score1 + " x " + score2;
+        // Start next player's turn.
+        if (opponentAI != null) {
+            if (!playerTurn)
+                opponentAI.OpponentTurn();
+        } else {
+            // Enable buttons for next player.
+            foreach (CardButton button in CardSelector.Instance.handParent.GetComponentsInChildren<CardButton>()) {
+                button.enabled = playerTurn;
+            }
+            foreach (CardButton button in CardSelector.Instance.handParent2.GetComponentsInChildren<CardButton>()) {
+                button.enabled = !playerTurn;
+            }
+        }
+    }
+
+    // Returns true if game ended.
+    protected bool GameEnded() {
+        // Verify if one of them won
         for (int i = 0; i < board.Length; i++) {
             if (board[i] == null) {
-                if (playerTurn)
-                    scoreText.text = "Player 1 turn\n";
-                else
-                    scoreText.text = "Player 2 turn\n";
-                scoreText.text += score1 + " x " + score2;
                 return false;
             }
         }
-        if (score1 > score2) {
-            scoreText.text = opponentAI == null ? "Player 1 wins!\n" : "You win!\n";
-        } else if (score1 < score2) {
-            scoreText.text = opponentAI == null ? "Player 2 wins!\n" : "You lose.\n";
-        } else {
-            scoreText.text = "Draw.\n";
-        }
-        scoreText.text += score1 + " x " + score2;
-        continueButton.gameObject.SetActive(true);
         return true;
     }
 

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class CardSelector : MonoBehaviour {
     
     public static CardSelector Instance { get; private set; }
-    public float cardHeight = 300;
+    public float cardHeight = 384;
 
     // Prefab
     public CardButton cardButtonPrefab;
@@ -56,7 +56,9 @@ public class CardSelector : MonoBehaviour {
 
     // Creates a card instance for each card in given hand (used for AI-selected hand).
     public void CreateOpponentHand(DeckManager.Card[] hand) {
-        Vector3 position = deckParent.transform.position;
+        Vector3 position = handParent2.transform.position;
+        position.z -= 1;
+        position.y += cardHeight * 2;
         for (int i = 0; i < hand.Length; i++) {
             Card copy = Instantiate(selectedCardCopy, position, Quaternion.identity);
             copy.transform.SetParent(handParent2);
@@ -114,8 +116,8 @@ public class CardSelector : MonoBehaviour {
             if (handParent.childCount == 5)
                 return false; // Reached max
             Vector3 pos = handParent.position;
-            pos.y -= cardHeight * handParent.childCount;
-            pos.z = -handParent.childCount * 3;
+            pos.y += cardHeight * (2 - handParent.childCount);
+            pos.z = -handParent.childCount * 3 - 1;
             button.transform.SetParent(handParent);
             button.cardComponent.MoveTo(pos);
             startButton.interactable = handParent.childCount == 5;
@@ -152,7 +154,7 @@ public class CardSelector : MonoBehaviour {
             Destroy(clickedCard); // Destroys button component only.
         }
         clickedCard = null;
-        position.z = 0;
+        position.z = -1;
         card.MoveTo(position);
         card.transform.SetParent(boardParent);
         SelectCard(null);

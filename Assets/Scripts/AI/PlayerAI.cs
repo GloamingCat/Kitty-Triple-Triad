@@ -16,7 +16,7 @@ public abstract class PlayerAI {
         Card[] cards = CardSelector.Instance.handParent2.GetComponentsInChildren<Card>();
         List<Card> hand = new List<Card>();
         foreach (Card card in cards) {
-            if (card.flipped)
+            if (card.flipped) // Is owned by player two.
                 hand.Add(card);
         }
         BoardSlot[] slots = UnityEngine.Object.FindObjectsOfType<BoardSlot>();
@@ -25,11 +25,11 @@ public abstract class PlayerAI {
             if (TurnManager.Instance.board[slot.pos] == null)
                 emptySlots.Add(slot);
         }
-        if (emptySlots.Count == 0)
+        if (emptySlots.Count == 0 || hand.Count == 0)
             return;
         Tuple<Card, BoardSlot> selection = Play(hand, emptySlots);
-        CardSelector.Instance.PlaceCard(selection.Item2.transform.position, selection.Item1);
         TurnManager.Instance.PlaceCard(selection.Item1, selection.Item2.pos);
+        CardSelector.Instance.PlaceCard(selection.Item2.transform.position, selection.Item1);
         TurnManager.Instance.NextTurn();
         UnityEngine.Object.Destroy(selection.Item2);
     }
