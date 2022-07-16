@@ -8,6 +8,8 @@ public class StageButton : MonoBehaviour {
     public Text text;
 
     protected void Start() {
+        if (!player)
+            return;
         if (player.name.Equals("Alice") || player.name.Equals("Bob"))
             GetComponent<Button>().interactable = true;
         else

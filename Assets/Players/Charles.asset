@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Charles
   m_EditorClassIdentifier: 
   title: Charles
-  deck: White 5 Black 5
+  deck: White 3 Black 3
   aiType: 2

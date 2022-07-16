@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScriptableObject
   title: Alice
   deck: White 5
-  aiType: 0
+  aiType: 1

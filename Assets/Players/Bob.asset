@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: Bob
   deck: Black 5
-  aiType: 1
+  aiType: 2
