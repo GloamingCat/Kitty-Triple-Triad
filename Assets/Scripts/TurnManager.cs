@@ -6,20 +6,20 @@ using UnityEngine.UI;
 public class TurnManager : MonoBehaviour {
 
     public static TurnManager Instance { get; private set; }
-    public static OpponentScriptableObject opponent;
+    public static OpponentScriptableObject opponent; // Set from Title scene.
 
-    // Game state
+    // Game state.
     public Card[] board { get; private set; }
-    public bool playerTurn { get; private set; }
-    public int currentRound { get; private set; }
-
+    protected bool playerTurn;
+    protected int currentRound;
     protected int score1, score2;
 
-    protected PlayerAI opponentAI;
+    protected PlayerAI opponentAI; // Null if there are two human players.
 
-    // Scene
+    // Scene objects.
     public Text scoreText;
     public Button continueButton;
+    public ParticleSystem winParticles;
 
     protected void Awake() {
         if (Instance != null && Instance != this) {
@@ -46,7 +46,7 @@ public class TurnManager : MonoBehaviour {
                 opponentAI = new FlipAI();
                 break;
             default:
-                opponentAI = null; // Two-player
+                opponentAI = null; // Two human players.
                 break;
             }
         }
@@ -72,7 +72,7 @@ public class TurnManager : MonoBehaviour {
                 // Move current hand to opponent hand.
                 Card[] opponentHand = CardSelector.Instance.handParent.GetComponentsInChildren<Card>();
                 CardSelector.Instance.MoveOpponentHand(opponentHand);
-                // Start card selection again, but for second player.
+                // Start card selection again, but for the other player.
                 CardSelector.Instance.ChooseHand(DeckManager.Instance.GetPlayerDeck(), false);
                 scoreText.text = "Select player 1's cards";
                 playerTurn = false;
@@ -84,7 +84,7 @@ public class TurnManager : MonoBehaviour {
             }
         }
         // All hands chosen
-        playerTurn = Random.Range(0, 2) == 0; // Coin flip
+        playerTurn = Random.Range(0, 2) == 0; // Coin flip.
         currentRound++;
         CardSelector.Instance.StartGame();
         UpdateScores();
@@ -100,6 +100,7 @@ public class TurnManager : MonoBehaviour {
         UpdateScores();
     }
 
+    // Gets the list of cards that are flipped when a card is placed on position i.
     public List<Card> FlippedCards(Card card, int i) {
         List<Card> flippedCards = new List<Card>();
         int col = i % 3;
@@ -142,7 +143,15 @@ public class TurnManager : MonoBehaviour {
         // Verify if game ended.
         if (GameEnded()) {
             if (score1 > score2) {
-                scoreText.text = opponentAI == null ? "Player 1 wins!\n" : "You win!\n";
+                if (opponentAI == null) {
+                    // Two players.
+                    scoreText.text = "Player 1 wins!\n";
+                } else {
+                    // Single player.
+                    scoreText.text = "You win!\n";
+                    winParticles.gameObject.SetActive(true);
+                    winParticles.time = 0;
+                }
             } else if (score1 < score2) {
                 scoreText.text = opponentAI == null ? "Player 2 wins!\n" : "You lose.\n";
             } else {
@@ -187,14 +196,23 @@ public class TurnManager : MonoBehaviour {
         return true;
     }
 
-    // Button callback
+    // "Continue" button callback.
     public void FinishGame() {
         if (opponentAI == null)
             SceneManager.LoadScene("Title");
         else {
-            // TODO pick new card
+            if (score1 > score2) {
+                int winCount = PlayerPrefs.GetInt("WinCount", 0);
+                PlayerPrefs.SetInt("WinCount", winCount + 1);
+                // TODO: pick new card to add to player's deck.
+            }
             SceneManager.LoadScene("Title");
         }
+    }
+
+    // "Reset" button callback.
+    public void ResetGame() {
+        SceneManager.LoadScene("Play");
     }
 
 }
